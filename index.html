@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563EB">
+    <title>Excel Search Pro - Lite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- ▼▼▼ تم الإصلاح هنا: استبدال الملف المحلي بـ CDN رسمي ▼▼▼ -->
+    <script src="xlsx.full.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <!-- ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ -->
+    
+    <style>
+    :root {
+        --primary: #2563EB; --primary-dark: #1D4ED8; --primary-light: #DBEAFE;
+        --secondary: #475569; --accent: #F59E0B; --success: #10B981;
+        --danger: #EF4444; --background: #F8FAFC; --surface: #FFFFFF;
+        --text: #1E293B; --text-secondary: #64748B; --border: #E2E8F0;
+        --shadow: 0 4px 6px -1px rgba(0,0,0,0.1); --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+        --radius: 16px; --radius-sm: 12px; --transition: all 0.3s ease;
+    }
+    [data-theme="dark"] {
+        --background: #0F172A; --surface: #1E293B;
+        --text: #F1F5F9; --text-secondary: #94A3B8; --border: #334155;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { font-size: 16px; }
+    body {
+        font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--background); color: var(--text); line-height: 1.6;
+        overflow-x: hidden;
+    }
+    .hidden { display: none !important; }
+
+    .splash-screen {
+        position: fixed; inset: 0;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 9999; transition: opacity 0.5s ease;
+    }
+    .splash-content { text-align: center; color: white; padding: 2rem; }
+    .splash-icon { font-size: 4rem; margin-bottom: 1rem; animation: bounce 2s infinite; }
+    .splash-content h1 { font-size: 1.75rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .splash-content p { opacity: 0.9; font-size: 0.9rem; }
+    .loading-bar { width: 200px; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; margin: 1.5rem auto 0; overflow: hidden; }
+    .loading-progress { height: 100%; width: 0%; background: white; border-radius: 2px; animation: loading 2s ease-in-out forwards; }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    @keyframes loading { 0%{width:0%} 100%{width:100%} }
+
+    .header { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+    .header-content { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; max-width: 1200px; margin: 0 auto; }
+    .header-title { font-size: 1.1rem; font-weight: 700; }
+    .icon-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: transparent; font-size: 1.25rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .icon-btn:hover { background: var(--primary-light); }
+
+    .import-progress { padding: 0.75rem 1rem; background: var(--surface); border-bottom: 1px solid var(--border); }
+    .progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; max-width: 900px; margin: 0 auto; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--success)); border-radius: 4px; transition: width 0.3s ease; width: 0%; }
+    .progress-text { text-align: center; font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem; }
+
+    .search-container { padding: 1rem; background: var(--surface); border-bottom: 1px solid var(--border); }
+    .search-box { position: relative; display: flex; align-items: center; background: var(--background); border: 2px solid var(--border); border-radius: var(--radius); padding: 0.75rem 1rem; transition: var(--transition); max-width: 900px; margin: 0 auto; }
+    .search-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+    .search-icon { font-size: 1.1rem; margin-left: 0.75rem; opacity: 0.5; }
+    #search-input { flex: 1; border: none; background: transparent; font-size: 1rem; font-family: inherit; color: var(--text); outline: none; }
+    #search-input::placeholder { color: var(--text-secondary); }
+    .clear-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1rem; padding: 0.25rem; opacity: 0.7; }
+    .clear-btn:hover { opacity: 1; }
+
+    .filter-section { padding: 0.75rem 1rem; background: var(--surface); border-bottom: 1px solid var(--border); }
+    .filter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+    .filter-label { font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; }
+    .text-btn { background: none; border: none; color: var(--primary); font-size: 0.8rem; cursor: pointer; font-family: inherit; font-weight: 600; }
+    .chips-container { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.25rem; scrollbar-width: none; }
+    .chips-container::-webkit-scrollbar { display: none; }
+    .chip { flex-shrink: 0; padding: 0.4rem 0.9rem; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary); font-size: 0.8rem; font-family: inherit; cursor: pointer; transition: var(--transition); white-space: nowrap; }
+    .chip:hover { border-color: var(--primary); color: var(--primary); }
+    .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+    .file-info { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: var(--primary-light); border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 0.5rem; }
+    .file-badge { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; flex-wrap: wrap; }
+    .file-icon { font-size: 1.1rem; }
+    .file-name { font-weight: 700; color: var(--primary-dark); }
+    .record-count { background: var(--primary); color: white; padding: 0.15rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+    .danger-btn-small { padding: 0.35rem 0.75rem; border-radius: 8px; border: 1px solid var(--danger); background: transparent; color: var(--danger); font-size: 0.75rem; font-family: inherit; cursor: pointer; font-weight: 600; }
+    .danger-btn-small:hover { background: var(--danger); color: white; }
+
+    .export-bar { display: flex; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+    .export-bar::-webkit-scrollbar { display: none; }
+    .export-btn { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.9rem; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary); font-size: 0.8rem; font-family: inherit; cursor: pointer; transition: var(--transition); white-space: nowrap; font-weight: 600; }
+    .export-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+    .upload-section { padding: 1.5rem 1rem; max-width: 900px; margin: 0 auto; }
+    .upload-card { border: 2px dashed var(--border); border-radius: var(--radius); padding: 2.5rem 1.5rem; text-align: center; background: var(--surface); transition: var(--transition); cursor: pointer; }
+    .upload-card:hover, .upload-card.dragover { border-color: var(--primary); background: var(--primary-light); }
+    .upload-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .upload-card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--text); }
+    .upload-card p { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.25rem; }
+    .primary-btn { background: var(--primary); color: white; border: none; padding: 0.75rem 2rem; border-radius: var(--radius-sm); font-size: 0.95rem; font-family: inherit; font-weight: 700; cursor: pointer; transition: var(--transition); box-shadow: var(--shadow); }
+    .primary-btn:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+    .primary-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .upload-note { margin-top: 1rem; font-size: 0.75rem; color: var(--success); font-weight: 600; }
+
+    .results-section { padding: 0 1rem 2rem; max-width: 1200px; margin: 0 auto; }
+    .results-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; position: sticky; top: 57px; background: var(--background); z-index: 50; }
+    #results-count { font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; }
+    .view-toggle { display: flex; background: var(--surface); border-radius: 8px; padding: 0.2rem; border: 1px solid var(--border); }
+    .toggle-btn { padding: 0.35rem 0.75rem; border: none; background: transparent; border-radius: 6px; font-size: 0.75rem; font-family: inherit; cursor: pointer; color: var(--text-secondary); font-weight: 600; transition: var(--transition); }
+    .toggle-btn.active { background: var(--primary); color: white; }
+
+    .cards-view { display: flex; flex-direction: column; gap: 0.75rem; }
+    .data-card { background: var(--surface); border-radius: var(--radius-sm); padding: 1rem; border: 1px solid var(--border); box-shadow: var(--shadow); transition: var(--transition); }
+    .data-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+    .card-id { background: var(--primary); color: white; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
+    .card-actions { display: flex; gap: 0.5rem; }
+    .card-action-btn { width: 28px; height: 28px; border-radius: 6px; border: none; background: var(--background); cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; }
+    .card-action-btn:hover { background: var(--primary-light); }
+    .card-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.4rem 0; gap: 1rem; }
+    .card-label { font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; min-width: 80px; flex-shrink: 0; }
+    .card-value { font-size: 0.85rem; color: var(--text); font-weight: 500; word-break: break-word; text-align: right; flex: 1; }
+    .highlight { background: var(--accent); color: white; padding: 0 0.2rem; border-radius: 3px; font-weight: 700; }
+
+    .table-view { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); }
+    .table-wrapper { min-width: 100%; }
+    #data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    #data-table th { background: var(--primary); color: white; padding: 0.75rem; text-align: right; font-weight: 700; white-space: nowrap; position: sticky; top: 0; }
+    #data-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); text-align: right; color: var(--text); }
+    #data-table tr:hover { background: var(--primary-light); }
+    .table-actions { display: flex; gap: 0.3rem; }
+    .table-action-btn { width: 24px; height: 24px; border-radius: 4px; border: none; background: var(--background); cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; }
+
+    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-secondary); }
+    .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+    .empty-state h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--text); }
+
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 0.5rem; padding: 1rem; }
+    .page-btn { padding: 0.5rem 0.9rem; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary); font-size: 0.85rem; font-family: inherit; cursor: pointer; transition: var(--transition); font-weight: 600; }
+    .page-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .page-info { font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; }
+
+    .modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: flex-end; justify-content: center; }
+    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+    .modal-content { position: relative; background: var(--surface); width: 100%; max-width: 500px; max-height: 80vh; border-radius: var(--radius) var(--radius) 0 0; overflow: hidden; animation: slideUp 0.3s ease; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem; border-bottom: 1px solid var(--border); }
+    .modal-header h2 { font-size: 1.1rem; }
+    .close-btn { background: none; border: none; font-size: 1.25rem; cursor: pointer; color: var(--text-secondary); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+    .close-btn:hover { background: var(--background); }
+    .modal-body { padding: 0.5rem; overflow-y: auto; }
+    .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border); }
+    .setting-item.danger { border-bottom: none; }
+    .setting-info { display: flex; flex-direction: column; gap: 0.25rem; }
+    .setting-label { font-weight: 700; color: var(--text); }
+    .setting-desc { font-size: 0.8rem; color: var(--text-secondary); }
+    .switch { position: relative; width: 50px; height: 28px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background: var(--border); border-radius: 28px; transition: var(--transition); }
+    .slider:before { content: ""; position: absolute; height: 22px; width: 22px; right: 3px; bottom: 3px; background: white; border-radius: 50%; transition: var(--transition); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    input:checked + .slider { background: var(--primary); }
+    input:checked + .slider:before { transform: translateX(-22px); }
+    .danger-btn { padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--danger); background: transparent; color: var(--danger); font-family: inherit; font-weight: 700; cursor: pointer; transition: var(--transition); }
+    .danger-btn:hover { background: var(--danger); color: white; }
+
+    .edit-modal .modal-content { max-width: 450px; }
+    .edit-form { padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+    .edit-field { display: flex; flex-direction: column; gap: 0.4rem; }
+    .edit-field label { font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); }
+    .edit-field input, .edit-field textarea { padding: 0.75rem; border: 2px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; font-size: 0.95rem; background: var(--background); color: var(--text); outline: none; }
+    .edit-field input:focus, .edit-field textarea:focus { border-color: var(--primary); }
+    .edit-field textarea { resize: vertical; min-height: 80px; }
+    .edit-actions { display: flex; gap: 0.75rem; margin-top: 0.5rem; }
+    .edit-actions button { flex: 1; }
+    .secondary-btn { padding: 0.75rem; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary); font-family: inherit; font-weight: 700; cursor: pointer; transition: var(--transition); }
+    .secondary-btn:hover { border-color: var(--text-secondary); color: var(--text); }
+
+    .toast-container { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 2000; display: flex; flex-direction: column; gap: 0.5rem; width: 90%; max-width: 400px; }
+    .toast { padding: 0.875rem 1.25rem; border-radius: var(--radius-sm); color: white; font-weight: 600; font-size: 0.9rem; box-shadow: var(--shadow-lg); animation: toastIn 0.3s ease; display: flex; align-items: center; gap: 0.5rem; }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.info { background: var(--primary); }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .perf-stats { display: flex; gap: 1rem; padding: 0.5rem 1rem; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 0.75rem; color: var(--text-secondary); justify-content: center; flex-wrap: wrap; }
+    .perf-stat { display: flex; align-items: center; gap: 0.3rem; }
+
+    @media (min-width: 768px) {
+        .cards-view { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+        .modal { align-items: center; }
+        .modal-content { border-radius: var(--radius); max-height: 60vh; }
+    }
+    @media (max-width: 480px) {
+        html { font-size: 15px; }
+        .upload-card { padding: 1.5rem 1rem; }
+        .card-row { flex-direction: column; gap: 0.25rem; }
+        .card-label { min-width: auto; }
+        .file-info { flex-direction: column; align-items: flex-start; }
+    }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div id="splash-screen" class="splash-screen">
+        <div class="splash-content">
+            <div class="splash-icon">📊</div>
+            <h1>Excel Search Pro</h1>
+            <p>أداة بحث احترافية - تعمل بدون إنترنت</p>
+            <div class="loading-bar"><div class="loading-progress"></div></div>
+            <div id="loading-status" style="margin-top:1rem;font-size:0.85rem;opacity:0.9;">جاري التحميل...</div>
+        </div>
+    </div>
+
+    <div id="app" class="app hidden">
+        <header class="header">
+            <div class="header-content">
+                <button id="menu-btn" class="icon-btn" aria-label="القائمة">☰</button>
+                <h1 class="header-title">بحث Excel</h1>
+                <button id="settings-btn" class="icon-btn" aria-label="الإعدادات">⚙️</button>
+            </div>
+        </header>
+
+        <div id="import-progress" class="import-progress hidden">
+            <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+            <div id="progress-text" class="progress-text">0%</div>
+        </div>
+
+        <div class="search-container">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="search-input" placeholder="ابحث بالاسم، الرقم، الهاتف..." autocomplete="off" dir="auto">
+                <button id="clear-search" class="clear-btn hidden">✕</button>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-header">
+                <span class="filter-label">البحث في:</span>
+                <button id="select-all-columns" class="text-btn">الكل</button>
+            </div>
+            <div id="column-chips" class="chips-container"></div>
+        </div>
+
+        <div id="file-info" class="file-info hidden">
+            <div class="file-badge">
+                <span class="file-icon">📄</span>
+                <span id="file-name" class="file-name">ملف Excel</span>
+                <span id="record-count" class="record-count">0 سجل</span>
+            </div>
+            <button id="clear-data-btn" class="danger-btn-small">مسح</button>
+        </div>
+
+        <div id="perf-stats" class="perf-stats hidden">
+            <div class="perf-stat">⚡ <span id="search-time">0ms</span></div>
+            <div class="perf-stat">📊 <span id="total-loaded">0</span> سجل</div>
+            <div class="perf-stat">💾 <span id="memory-usage">0 MB</span></div>
+        </div>
+
+        <div id="export-bar" class="export-bar hidden">
+            <button class="export-btn" id="export-csv-btn"><span>📋</span> CSV</button>
+            <button class="export-btn" id="export-json-btn"><span>📝</span> JSON</button>
+        </div>
+
+        <div id="upload-section" class="upload-section">
+            <div class="upload-card" id="drop-zone">
+                <div class="upload-icon">📤</div>
+                <h3>ارفع ملف Excel</h3>
+                <p>اسحب الملف هنا أو اضغط للاختيار</p>
+                <input type="file" id="file-input" accept=".xlsx,.xls,.csv" hidden>
+                <button class="primary-btn" id="upload-btn" onclick="document.getElementById('file-input').click()">اختيار ملف</button>
+                <p class="upload-note">✓ يدعم .xlsx و .xls و .csv</p>
+                <p class="upload-note" style="color: var(--text-secondary); margin-top: 0.3rem;">✓ يعمل بدون إنترنت</p>
+            </div>
+        </div>
+
+        <div id="results-section" class="results-section hidden">
+            <div class="results-header">
+                <span id="results-count">0 نتيجة</span>
+                <div class="view-toggle">
+                    <button id="view-cards" class="toggle-btn active">بطاقات</button>
+                    <button id="view-table" class="toggle-btn">جدول</button>
+                </div>
+            </div>
+            <div id="cards-view" class="cards-view"></div>
+            <div id="table-view" class="table-view hidden">
+                <div class="table-wrapper">
+                    <table id="data-table"><thead></thead><tbody></tbody></table>
+                </div>
+            </div>
+            <div id="pagination" class="pagination hidden">
+                <button id="prev-page" class="page-btn">← السابق</button>
+                <span id="page-info" class="page-info">صفحة 1 من 1</span>
+                <button id="next-page" class="page-btn">التالي →</button>
+            </div>
+        </div>
+
+        <div id="empty-state" class="empty-state hidden">
+            <div class="empty-icon">🔍</div>
+            <h3>لا توجد نتائج</h3>
+            <p>جرب كلمات بحث مختلفة</p>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>الإعدادات</h2>
+                <button class="close-btn" onclick="app.closeModal('settings-modal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <span class="setting-label">الوضع الليلي</span>
+                        <span class="setting-desc">تفعيل المظهر الداكن</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="dark-mode-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <span class="setting-label">اتجاه RTL</span>
+                        <span class="setting-desc">الوضع العربي</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="rtl-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <span class="setting-label">السجلات في الصفحة</span>
+                        <span class="setting-desc">عدد السجلات المعروضة</span>
+                    </div>
+                    <select id="page-size" style="padding: 0.4rem; border-radius: 6px; border: 1px solid var(--border); font-family: inherit;">
+                        <option value="20">20</option>
+                        <option value="50" selected>50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                    </select>
+                </div>
+                <div class="setting-item danger">
+                    <div class="setting-info">
+                        <span class="setting-label">مسح جميع البيانات</span>
+                        <span class="setting-desc">حذف كل البيانات المخزنة</span>
+                    </div>
+                    <button id="clear-all-btn" class="danger-btn">مسح الكل</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="modal edit-modal hidden">
+        <div class="modal-overlay" onclick="app.closeModal('edit-modal')"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>تعديل السجل</h2>
+                <button class="close-btn" onclick="app.closeModal('edit-modal')">✕</button>
+            </div>
+            <div id="edit-form" class="edit-form"></div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+<script>
+// ============================================
+// XLSX Parser using SheetJS (CDN)
+// ============================================
+class XLSXParser {
+    // ▼▼▼ تم الإصلاح هنا: التحقق من توفر المكتبة ▼▼▼
+    isReady() {
+        return typeof XLSX !== 'undefined' && XLSX.read && XLSX.utils;
+    }
+
+    validateFile(file) {
+        const name = file.name.toLowerCase();
+        return name.endsWith('.xlsx') || name.endsWith('.xls') || name.endsWith('.csv');
+    }
+
+    async parseFile(file) {
+        // ▼▼▼ تم الإصلاح هنا: التحقق من تحميل المكتبة قبل الاستخدام ▼▼▼
+        if (!this.isReady()) {
+            throw new Error('مكتبة قراءة Excel لم تحمل بعد. تأكد من اتصالك بالإنترنت وأعد تحميل الصفحة.');
+        }
+
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array', codepage: 65001 });
+                    
+                    // Read the first sheet
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // Convert to JSON with header row
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+                        header: 1,
+                        defval: '',
+                        blankrows: false
+                    });
+
+                    if (jsonData.length === 0) {
+                        reject(new Error('الملف فارغ'));
+                        return;
+                    }
+
+                    // Extract headers from first row
+                    const rawHeaders = jsonData[0];
+                    const headers = rawHeaders.map((h, i) => ({
+                        id: `col_${i}`,
+                        label: String(h || '').trim() || `عمود ${i + 1}`,
+                        index: i
+                    }));
+
+                    // Extract records
+                    const records = [];
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        const record = { id: i - 1 };
+                        headers.forEach((col, ci) => {
+                            const val = row[ci];
+                            record[col.id] = val !== undefined && val !== null ? String(val).trim() : '';
+                        });
+                        records.push(record);
+                    }
+
+                    resolve({ headers, records, totalRows: records.length });
+                } catch (error) {
+                    reject(new Error('فشل قراءة الملف: ' + error.message));
+                }
+            };
+            reader.onerror = () => reject(new Error('فشل قراءة الملف'));
+            reader.readAsArrayBuffer(file);
+        });
+    }
+}
+
+// ============================================
+// CSV Parser - يعمل بدون أي مكتبات
+// ============================================
+class CSVParser {
+    parse(text) {
+        const lines = text.split('\n').filter(line => line.trim());
+        if (lines.length === 0) throw new Error('الملف فارغ');
+
+        // قراءة الأعمدة من السطر الأول
+        const headers = this.parseLine(lines[0]).map((h, i) => ({
+            id: `col_${i}`,
+            label: h.trim() || `عمود ${i + 1}`,
+            index: i
+        }));
+
+        // قراءة البيانات
+        const records = [];
+        for (let i = 1; i < lines.length; i++) {
+            const values = this.parseLine(lines[i]);
+            const record = { id: i - 1 };
+            headers.forEach((col, ci) => {
+                record[col.id] = values[ci] !== undefined ? values[ci].trim() : '';
+            });
+            records.push(record);
+        }
+
+        return { headers, records, totalRows: records.length };
+    }
+
+    parseLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const nextChar = line[i + 1];
+
+            if (char === '"') {
+                if (inQuotes && nextChar === '"') {
+                    current += '"';
+                    i++; // skip next quote
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === ',' && !inQuotes) {
+                result.push(current);
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+
+        result.push(current);
+        return result;
+    }
+
+    export(records, columns, fileName) {
+        const displayCols = columns.filter(c => !c.id.startsWith('_'));
+        let csv = displayCols.map(c => c.label).join(',') + '\n';
+
+        records.forEach(record => {
+            csv += displayCols.map(col => {
+                let val = String(record[col.id] ?? '').replace(/"/g, '""');
+                if (val.includes(',') || val.includes('"') || val.includes('\n')) val = `"${val}"`;
+                return val;
+            }).join(',') + '\n';
+        });
+
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        link.click();
+    }
+}
+
+const csvParser = new CSVParser();
+const xlsxParser = new XLSXParser();
+
+// ============================================
+// Search Engine
+// ============================================
+class SearchEngine {
+    constructor() { this.timer = null; }
+
+    search(records, query, selectedColumns, columns) {
+        if (!query || !query.trim()) {
+            return { results: records, total: records.length };
+        }
+
+        const searchTerm = query.toLowerCase().trim();
+        const searchCols = selectedColumns.length > 0 
+            ? columns.filter(c => selectedColumns.includes(c.id))
+            : columns.filter(c => !c.id.startsWith('_'));
+
+        const results = [];
+
+        records.forEach(record => {
+            for (const col of searchCols) {
+                const value = String(record[col.id] ?? '').toLowerCase();
+                if (value.includes(searchTerm)) {
+                    results.push({
+                        ...record,
+                        _highlighted: { [col.id]: this.highlight(String(record[col.id]), searchTerm) }
+                    });
+                    break;
+                }
+            }
+        });
+
+        return { results, total: results.length };
+    }
+
+    highlight(text, query) {
+        if (!query) return text;
+        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${escapedQuery})`, 'gi');
+        return text.replace(regex, '<mark class="highlight">$1</mark>');
+    }
+
+    debounce(callback, delay = 200) {
+        clearTimeout(this.timer);
+        this.timer = setTimeout(callback, delay);
+    }
+}
+
+const searchEngine = new SearchEngine();
+
+// ============================================
+// UI Controller
+// ============================================
+class UI {
+    constructor() {
+        this.elements = {};
+        this.currentView = 'cards';
+        this.initElements();
+    }
+
+    initElements() {
+        this.elements = {
+            splash: document.getElementById('splash-screen'),
+            app: document.getElementById('app'),
+            loadingStatus: document.getElementById('loading-status'),
+            searchInput: document.getElementById('search-input'),
+            clearSearch: document.getElementById('clear-search'),
+            columnChips: document.getElementById('column-chips'),
+            fileInfo: document.getElementById('file-info'),
+            fileName: document.getElementById('file-name'),
+            recordCount: document.getElementById('record-count'),
+            uploadSection: document.getElementById('upload-section'),
+            resultsSection: document.getElementById('results-section'),
+            cardsView: document.getElementById('cards-view'),
+            tableView: document.getElementById('table-view'),
+            dataTable: document.getElementById('data-table'),
+            resultsCount: document.getElementById('results-count'),
+            emptyState: document.getElementById('empty-state'),
+            dropZone: document.getElementById('drop-zone'),
+            fileInput: document.getElementById('file-input'),
+            uploadBtn: document.getElementById('upload-btn'),
+            viewCards: document.getElementById('view-cards'),
+            viewTable: document.getElementById('view-table'),
+            settingsModal: document.getElementById('settings-modal'),
+            toastContainer: document.getElementById('toast-container'),
+            selectAllColumns: document.getElementById('select-all-columns'),
+            exportBar: document.getElementById('export-bar'),
+            editModal: document.getElementById('edit-modal'),
+            editForm: document.getElementById('edit-form'),
+            importProgress: document.getElementById('import-progress'),
+            progressFill: document.getElementById('progress-fill'),
+            progressText: document.getElementById('progress-text'),
+            pagination: document.getElementById('pagination'),
+            prevPage: document.getElementById('prev-page'),
+            nextPage: document.getElementById('next-page'),
+            pageInfo: document.getElementById('page-info'),
+            perfStats: document.getElementById('perf-stats'),
+            searchTime: document.getElementById('search-time'),
+            totalLoaded: document.getElementById('total-loaded'),
+            memoryUsage: document.getElementById('memory-usage')
+        };
+    }
+
+    hideSplash() {
+        setTimeout(() => {
+            this.elements.splash.style.opacity = '0';
+            setTimeout(() => {
+                this.elements.splash.classList.add('hidden');
+                this.elements.app.classList.remove('hidden');
+            }, 500);
+        }, 500);
+    }
+
+    forceHideSplash() {
+        this.elements.splash.style.opacity = '0';
+        setTimeout(() => {
+            this.elements.splash.classList.add('hidden');
+            this.elements.app.classList.remove('hidden');
+        }, 500);
+    }
+
+    updateLoadingStatus(text) {
+        if (this.elements.loadingStatus) {
+            this.elements.loadingStatus.textContent = text;
+        }
+    }
+
+    showToast(message, type = 'info', duration = 3000) {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        const icons = { success: '✓', error: '✕', info: 'ℹ' };
+        toast.innerHTML = `<span>${icons[type]}</span> ${message}`;
+        this.elements.toastContainer.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(20px)';
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    }
+
+    showProgress(percent, processed, total) {
+        this.elements.importProgress.classList.remove('hidden');
+        this.elements.progressFill.style.width = `${percent}%`;
+        this.elements.progressText.textContent = `${percent}% (${processed.toLocaleString('ar-SA')} / ${total.toLocaleString('ar-SA')} سجل)`;
+    }
+
+    hideProgress() {
+        this.elements.importProgress.classList.add('hidden');
+        this.elements.progressFill.style.width = '0%';
+    }
+
+    renderColumnChips(columns, selectedColumns, onToggle) {
+        const container = this.elements.columnChips;
+        container.innerHTML = '';
+        columns.forEach(col => {
+            const chip = document.createElement('button');
+            chip.className = `chip ${selectedColumns.includes(col.id) ? 'active' : ''}`;
+            chip.textContent = col.label;
+            chip.onclick = () => onToggle(col.id);
+            container.appendChild(chip);
+        });
+    }
+
+    showFileInfo(metadata) {
+        this.elements.fileName.textContent = metadata.fileName;
+        this.elements.recordCount.textContent = `${metadata.recordCount.toLocaleString('ar-SA')} سجل`;
+        this.elements.fileInfo.classList.remove('hidden');
+        this.elements.uploadSection.classList.add('hidden');
+        this.elements.resultsSection.classList.remove('hidden');
+        this.elements.exportBar.classList.remove('hidden');
+        this.elements.perfStats.classList.remove('hidden');
+    }
+
+    hideFileInfo() {
+        this.elements.fileInfo.classList.add('hidden');
+        this.elements.uploadSection.classList.remove('hidden');
+        this.elements.resultsSection.classList.add('hidden');
+        this.elements.exportBar.classList.add('hidden');
+        this.elements.emptyState.classList.add('hidden');
+        this.elements.perfStats.classList.add('hidden');
+        this.elements.pagination.classList.add('hidden');
+    }
+
+    updatePerfStats(searchTime, totalLoaded, memoryMB) {
+        this.elements.searchTime.textContent = `${searchTime}ms`;
+        this.elements.totalLoaded.textContent = totalLoaded.toLocaleString('ar-SA');
+        this.elements.memoryUsage.textContent = `${memoryMB.toFixed(1)} MB`;
+    }
+
+    renderResults(results, columns, query, total, page, totalPages, onEdit, onDelete) {
+        this.elements.resultsCount.textContent = `${total.toLocaleString('ar-SA')} نتيجة`;
+
+        if (results.length === 0 && query) {
+            this.elements.emptyState.classList.remove('hidden');
+            this.elements.cardsView.innerHTML = '';
+            this.elements.tableView.classList.add('hidden');
+            this.elements.pagination.classList.add('hidden');
+            return;
+        }
+
+        this.elements.emptyState.classList.add('hidden');
+
+        if (this.currentView === 'cards') {
+            this.renderCards(results, columns, query, onEdit, onDelete);
+        } else {
+            this.renderTable(results, columns, query, onEdit, onDelete);
+        }
+
+        if (totalPages > 1) {
+            this.elements.pagination.classList.remove('hidden');
+            this.elements.pageInfo.textContent = `صفحة ${page} من ${totalPages}`;
+            this.elements.prevPage.disabled = page <= 1;
+            this.elements.nextPage.disabled = page >= totalPages;
+        } else {
+            this.elements.pagination.classList.add('hidden');
+        }
+    }
+
+    renderCards(results, columns, query, onEdit, onDelete) {
+        const container = this.elements.cardsView;
+        container.innerHTML = '';
+        this.elements.cardsView.classList.remove('hidden');
+        this.elements.tableView.classList.add('hidden');
+        const displayColumns = columns.filter(c => !c.id.startsWith('_'));
+
+        results.forEach((record) => {
+            const card = document.createElement('div');
+            card.className = 'data-card';
+
+            let rowsHtml = '';
+            displayColumns.forEach(col => {
+                const value = record._highlighted && record._highlighted[col.id] 
+                    ? record._highlighted[col.id] 
+                    : String(record[col.id] || '-');
+                rowsHtml += `<div class="card-row"><span class="card-label">${col.label}</span><span class="card-value">${value}</span></div>`;
+            });
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <span class="card-id">#${record.id + 1}</span>
+                    <div class="card-actions">
+                        <button class="card-action-btn edit" title="تعديل">✏️</button>
+                        <button class="card-action-btn delete" title="حذف">🗑️</button>
+                    </div>
+                </div>
+                ${rowsHtml}`;
+
+            card.querySelector('.edit').onclick = () => onEdit(record.id);
+            card.querySelector('.delete').onclick = () => onDelete(record.id);
+            container.appendChild(card);
+        });
+    }
+
+    renderTable(results, columns, query, onEdit, onDelete) {
+        this.elements.cardsView.classList.add('hidden');
+        this.elements.tableView.classList.remove('hidden');
+        const displayColumns = columns.filter(c => !c.id.startsWith('_'));
+        const table = this.elements.dataTable;
+
+        let theadHtml = '<tr><th>إجراءات</th>';
+        displayColumns.forEach(col => { theadHtml += `<th>${col.label}</th>`; });
+        theadHtml += '</tr>';
+        table.querySelector('thead').innerHTML = theadHtml;
+
+        let tbodyHtml = '';
+        results.forEach(record => {
+            tbodyHtml += '<tr>';
+            tbodyHtml += `<td><div class="table-actions">
+                <button class="table-action-btn" title="تعديل" onclick="app.handleEdit(${record.id})">✏️</button>
+                <button class="table-action-btn" title="حذف" onclick="app.handleDelete(${record.id})">🗑️</button>
+            </div></td>`;
+            displayColumns.forEach(col => {
+                const value = record._highlighted && record._highlighted[col.id] 
+                    ? record._highlighted[col.id] 
+                    : String(record[col.id] || '-');
+                tbodyHtml += `<td>${value}</td>`;
+            });
+            tbodyHtml += '</tr>';
+        });
+        table.querySelector('tbody').innerHTML = tbodyHtml;
+    }
+
+    setView(view) {
+        this.currentView = view;
+        this.elements.viewCards.classList.toggle('active', view === 'cards');
+        this.elements.viewTable.classList.toggle('active', view === 'table');
+    }
+
+    toggleModal(modalId, show) {
+        const modal = document.getElementById(modalId);
+        if (show) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        } else {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    }
+
+    showEditForm(record, columns, onSave, onCancel) {
+        const form = this.elements.editForm;
+        const displayCols = columns.filter(c => !c.id.startsWith('_'));
+
+        let html = '';
+        displayCols.forEach(col => {
+            const value = String(record[col.id] ?? '');
+            const isLong = value.length > 50;
+            html += `<div class="edit-field"><label>${col.label}</label>${isLong ? `<textarea id="edit-${col.id}">${this.escapeHtml(value)}</textarea>` : `<input type="text" id="edit-${col.id}" value="${this.escapeHtml(value)}">`}</div>`;
+        });
+
+        html += `<div class="edit-actions"><button class="primary-btn" id="save-edit-btn">حفظ التغييرات</button><button class="secondary-btn" id="cancel-edit-btn">إلغاء</button></div>`;
+        form.innerHTML = html;
+        this.toggleModal('edit-modal', true);
+
+        document.getElementById('save-edit-btn').onclick = () => {
+            const updates = {};
+            displayCols.forEach(col => {
+                const el = document.getElementById(`edit-${col.id}`);
+                if (el) updates[col.id] = el.value;
+            });
+            onSave(updates);
+        };
+        document.getElementById('cancel-edit-btn').onclick = onCancel;
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+}
+
+const ui = new UI();
+
+// ============================================
+// Main Application
+// ============================================
+class App {
+    constructor() {
+        this.allRecords = [];
+        this.columns = [];
+        this.metadata = null;
+        this.selectedColumns = [];
+        this.query = '';
+        this.isRTL = true;
+        this.isDarkMode = false;
+        this.editingId = null;
+        this.currentPage = 1;
+        this.pageSize = 50;
+        this.totalResults = 0;
+    }
+
+    init() {
+        // ▼▼▼ تم الإصلاح هنا: انتظار تحميل المكتبة قبل إخفاء Splash ▼▼▼
+        const checkXLSX = () => {
+            if (typeof XLSX !== 'undefined') {
+                ui.updateLoadingStatus('جاري تهيئة التطبيق...');
+                setTimeout(() => {
+                    try {
+                        this.loadSettings();
+                        this.bindEvents();
+                        ui.hideSplash();
+                    } catch (error) {
+                        console.error('Init error:', error);
+                        ui.forceHideSplash();
+                    }
+                }, 500);
+            } else {
+                ui.updateLoadingStatus('جاري تحميل مكتبة Excel...');
+                setTimeout(checkXLSX, 500);
+            }
+        };
+        
+        // بدء التحقق
+        setTimeout(checkXLSX, 500);
+
+        // مؤقت أمان - إخفاء Splash بعد 8 ثوانٍ حتى لو فشلت المكتبة
+        setTimeout(() => {
+            if (!this.elements || !this.elements.app) return;
+            if (this.elements.splash && !this.elements.splash.classList.contains('hidden')) {
+                ui.forceHideSplash();
+                if (typeof XLSX === 'undefined') {
+                    ui.showToast('تعذر تحميل مكتبة Excel. تأكد من اتصالك بالإنترنت.', 'error', 8000);
+                }
+            }
+        }, 8000);
+    }
+
+    loadSettings() {
+        const rtl = localStorage.getItem('rtl_enabled');
+        const dark = localStorage.getItem('dark_mode');
+        const pageSize = localStorage.getItem('page_size');
+
+        this.isRTL = rtl !== 'false';
+        this.isDarkMode = dark === 'true';
+        this.pageSize = parseInt(pageSize) || 50;
+
+        document.documentElement.dir = this.isRTL ? 'rtl' : 'ltr';
+        if (this.isDarkMode) document.documentElement.setAttribute('data-theme', 'dark');
+
+        const rtlToggle = document.getElementById('rtl-toggle');
+        const darkToggle = document.getElementById('dark-mode-toggle');
+        const pageSizeSelect = document.getElementById('page-size');
+
+        if (rtlToggle) rtlToggle.checked = this.isRTL;
+        if (darkToggle) darkToggle.checked = this.isDarkMode;
+        if (pageSizeSelect) pageSizeSelect.value = this.pageSize;
+    }
+
+    bindEvents() {
+        // رفع الملف
+        const fileInput = document.getElementById('file-input');
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+        }
+
+        // Drag & Drop
+        const dropZone = document.getElementById('drop-zone');
+        if (dropZone) {
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) this.processFile(files[0]);
+            });
+        }
+
+        // البحث
+        const searchInput = document.getElementById('search-input');
+        const clearSearch = document.getElementById('clear-search');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.query = e.target.value;
+                if (clearSearch) clearSearch.classList.toggle('hidden', !this.query);
+                this.currentPage = 1;
+                searchEngine.debounce(() => this.performSearch());
+            });
+        }
+
+        if (clearSearch) {
+            clearSearch.addEventListener('click', () => {
+                searchInput.value = '';
+                this.query = '';
+                clearSearch.classList.add('hidden');
+                this.currentPage = 1;
+                this.performSearch();
+            });
+        }
+
+        // فلتر الأعمدة
+        const selectAllColumns = document.getElementById('select-all-columns');
+        if (selectAllColumns) {
+            selectAllColumns.addEventListener('click', () => {
+                this.selectedColumns = [];
+                this.updateColumnChips();
+                this.currentPage = 1;
+                this.performSearch();
+            });
+        }
+
+        // تبديل العرض
+        const viewCards = document.getElementById('view-cards');
+        const viewTable = document.getElementById('view-table');
+
+        if (viewCards) {
+            viewCards.addEventListener('click', () => {
+                ui.setView('cards');
+                this.performSearch();
+            });
+        }
+        if (viewTable) {
+            viewTable.addEventListener('click', () => {
+                ui.setView('table');
+                this.performSearch();
+            });
+        }
+
+        // الإعدادات
+        const settingsBtn = document.getElementById('settings-btn');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => {
+                ui.toggleModal('settings-modal', true);
+            });
+        }
+
+        const settingsOverlay = document.querySelector('#settings-modal .modal-overlay');
+        if (settingsOverlay) {
+            settingsOverlay.addEventListener('click', () => {
+                ui.toggleModal('settings-modal', false);
+            });
+        }
+
+        // تبديل RTL
+        const rtlToggle = document.getElementById('rtl-toggle');
+        if (rtlToggle) {
+            rtlToggle.addEventListener('change', (e) => {
+                this.isRTL = e.target.checked;
+                localStorage.setItem('rtl_enabled', this.isRTL);
+                document.documentElement.dir = this.isRTL ? 'rtl' : 'ltr';
+                ui.showToast('سيتم تطبيق التغيير بعد إعادة التحميل', 'info');
+            });
+        }
+
+        // تبديل Dark Mode
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('change', (e) => {
+                this.isDarkMode = e.target.checked;
+                localStorage.setItem('dark_mode', this.isDarkMode);
+                document.documentElement.setAttribute('data-theme', this.isDarkMode ? 'dark' : 'light');
+            });
+        }
+
+        // حجم الصفحة
+        const pageSizeSelect = document.getElementById('page-size');
+        if (pageSizeSelect) {
+            pageSizeSelect.addEventListener('change', (e) => {
+                this.pageSize = parseInt(e.target.value);
+                localStorage.setItem('page_size', this.pageSize);
+                this.currentPage = 1;
+                this.performSearch();
+            });
+        }
+
+        // مسح البيانات
+        const clearDataBtn = document.getElementById('clear-data-btn');
+        const clearAllBtn = document.getElementById('clear-all-btn');
+
+        if (clearDataBtn) clearDataBtn.addEventListener('click', () => this.clearData());
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', () => {
+                this.clearData();
+                ui.toggleModal('settings-modal', false);
+            });
+        }
+
+        // Pagination
+        const prevPage = document.getElementById('prev-page');
+        const nextPage = document.getElementById('next-page');
+
+        if (prevPage) {
+            prevPage.addEventListener('click', () => {
+                if (this.currentPage > 1) {
+                    this.currentPage--;
+                    this.performSearch();
+                }
+            });
+        }
+        if (nextPage) {
+            nextPage.addEventListener('click', () => {
+                const totalPages = Math.ceil(this.totalResults / this.pageSize);
+                if (this.currentPage < totalPages) {
+                    this.currentPage++;
+                    this.performSearch();
+                }
+            });
+        }
+
+        // Export
+        const exportCsvBtn = document.getElementById('export-csv-btn');
+        const exportJsonBtn = document.getElementById('export-json-btn');
+
+        if (exportCsvBtn) exportCsvBtn.addEventListener('click', () => this.exportCSV());
+        if (exportJsonBtn) exportJsonBtn.addEventListener('click', () => this.exportJSON());
+    }
+
+    async handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) await this.processFile(file);
+        event.target.value = '';
+    }
+
+    async processFile(file) {
+        const name = file.name.toLowerCase();
+
+        if (!name.endsWith('.xlsx') && !name.endsWith('.xls') && !name.endsWith('.csv')) {
+            ui.showToast('الرجاء اختيار ملف Excel (.xlsx, .xls) أو CSV (.csv)', 'error');
+            return;
+        }
+
+        // ▼▼▼ تم الإصلاح هنا: التحقق من توفر المكتبة قبل معالجة Excel ▼▼▼
+        if ((name.endsWith('.xlsx') || name.endsWith('.xls')) && !xlsxParser.isReady()) {
+            ui.showToast('مكتبة Excel لم تحمل بعد. تأكد من اتصالك بالإنترنت وأعد تحميل الصفحة.', 'error', 6000);
+            return;
+        }
+
+        const uploadBtn = document.getElementById('upload-btn');
+        if (uploadBtn) uploadBtn.disabled = true;
+
+        ui.showToast('جاري قراءة الملف...', 'info');
+
+        try {
+            const startTime = performance.now();
+            let result;
+
+            if (name.endsWith('.csv')) {
+                // قراءة CSV مباشرة
+                const text = await file.text();
+                result = csvParser.parse(text);
+            } else {
+                // قراءة XLSX/XLS باستخدام SheetJS
+                result = await xlsxParser.parseFile(file);
+            }
+
+            this.columns = result.headers;
+            this.allRecords = result.records;
+            this.metadata = {
+                fileName: file.name,
+                recordCount: result.totalRows,
+                importedAt: new Date().toISOString()
+            };
+            this.selectedColumns = [];
+            this.query = '';
+            this.currentPage = 1;
+
+            // حفظ في localStorage
+            this.saveToStorage();
+
+            ui.showFileInfo(this.metadata);
+            ui.renderColumnChips(this.columns, this.selectedColumns, (colId) => this.toggleColumn(colId));
+
+            const searchInput = document.getElementById('search-input');
+            const clearSearch = document.getElementById('clear-search');
+            if (searchInput) searchInput.value = '';
+            if (clearSearch) clearSearch.classList.add('hidden');
+
+            const endTime = performance.now();
+            this.updateMemoryStats();
+            this.performSearch();
+
+            ui.showToast(`تم تحميل ${result.totalRows.toLocaleString('ar-SA')} سجل`, 'success');
+
+        } catch (error) {
+            console.error('Process file error:', error);
+            ui.showToast(error.message || 'فشل في تحميل الملف', 'error');
+        } finally {
+            if (uploadBtn) uploadBtn.disabled = false;
+        }
+    }
+
+    saveToStorage() {
+        try {
+            // حفظ الأعمدة والميتاداتا
+            localStorage.setItem('excel_columns', JSON.stringify(this.columns));
+            localStorage.setItem('excel_metadata', JSON.stringify(this.metadata));
+
+            // حفظ السجلات على دفعات (localStorage محدود 5MB)
+            const chunkSize = 1000;
+            const chunks = Math.ceil(this.allRecords.length / chunkSize);
+            localStorage.setItem('excel_chunks', chunks);
+
+            for (let i = 0; i < chunks; i++) {
+                const chunk = this.allRecords.slice(i * chunkSize, (i + 1) * chunkSize);
+                localStorage.setItem(`excel_chunk_${i}`, JSON.stringify(chunk));
+            }
+        } catch (e) {
+            console.warn('Storage save failed (might be too large):', e);
+            ui.showToast('الملف كبير - البيانات لن تحفظ بعد إغلاق المتصفح', 'info');
+        }
+    }
+
+    loadFromStorage() {
+        try {
+            const columns = localStorage.getItem('excel_columns');
+            const metadata = localStorage.getItem('excel_metadata');
+            const chunks = localStorage.getItem('excel_chunks');
+
+            if (!columns || !metadata || !chunks) return false;
+
+            this.columns = JSON.parse(columns);
+            this.metadata = JSON.parse(metadata);
+
+            this.allRecords = [];
+            for (let i = 0; i < parseInt(chunks); i++) {
+                const chunk = localStorage.getItem(`excel_chunk_${i}`);
+                if (chunk) {
+                    this.allRecords.push(...JSON.parse(chunk));
+                }
+            }
+
+            return true;
+        } catch (e) {
+            console.error('Load from storage failed:', e);
+            return false;
+        }
+    }
+
+    toggleColumn(colId) {
+        const index = this.selectedColumns.indexOf(colId);
+        if (index > -1) this.selectedColumns.splice(index, 1);
+        else this.selectedColumns.push(colId);
+        this.updateColumnChips();
+        this.currentPage = 1;
+        this.performSearch();
+    }
+
+    updateColumnChips() {
+        ui.renderColumnChips(this.columns, this.selectedColumns, (colId) => this.toggleColumn(colId));
+    }
+
+    performSearch() {
+        const startTime = performance.now();
+
+        const searchResult = searchEngine.search(
+            this.allRecords,
+            this.query,
+            this.selectedColumns,
+            this.columns
+        );
+
+        this.totalResults = searchResult.total;
+        const totalPages = Math.ceil(this.totalResults / this.pageSize);
+
+        const offset = (this.currentPage - 1) * this.pageSize;
+        const paginatedResults = searchResult.results.slice(offset, offset + this.pageSize);
+
+        const endTime = performance.now();
+        this.updateMemoryStats();
+        ui.updatePerfStats(Math.round(endTime - startTime), this.totalResults, this.getMemoryUsage());
+
+        ui.renderResults(
+            paginatedResults,
+            this.columns,
+            this.query,
+            this.totalResults,
+            this.currentPage,
+            totalPages,
+            (id) => this.handleEdit(id),
+            (id) => this.handleDelete(id)
+        );
+    }
+
+    updateMemoryStats() {
+        const memMB = this.getMemoryUsage();
+        ui.updatePerfStats(0, this.allRecords.length, memMB);
+    }
+
+    getMemoryUsage() {
+        try {
+            const recordsSize = JSON.stringify(this.allRecords).length / 1024 / 1024;
+            return recordsSize;
+        } catch (e) {
+            return 0;
+        }
+    }
+
+    // ====== Edit ======
+    handleEdit(id) {
+        const record = this.allRecords.find(r => r.id === id);
+        if (!record) return;
+        this.editingId = id;
+        ui.showEditForm(record, this.columns,
+            (updates) => this.saveEdit(id, updates),
+            () => { this.editingId = null; ui.toggleModal('edit-modal', false); }
+        );
+    }
+
+    saveEdit(id, updates) {
+        const index = this.allRecords.findIndex(r => r.id === id);
+        if (index === -1) return;
+
+        Object.keys(updates).forEach(key => {
+            this.allRecords[index][key] = updates[key];
+        });
+
+        this.saveToStorage();
+
+        this.editingId = null;
+        ui.toggleModal('edit-modal', false);
+        ui.showToast('تم حفظ التغييرات', 'success');
+        this.performSearch();
+    }
+
+    // ====== Delete ======
+    handleDelete(id) {
+        if (!confirm('هل أنت متأكد من حذف هذا السجل؟')) return;
+
+        this.allRecords = this.allRecords.filter(r => r.id !== id);
+        this.allRecords.forEach((r, i) => r.id = i);
+
+        this.saveToStorage();
+
+        this.metadata.recordCount = this.allRecords.length;
+        const recordCount = document.getElementById('record-count');
+        if (recordCount) recordCount.textContent = `${this.allRecords.length.toLocaleString('ar-SA')} سجل`;
+
+        ui.showToast('تم حذف السجل', 'success');
+        this.performSearch();
+    }
+
+    // ====== Export ======
+    exportCSV() {
+        const data = this.getFilteredData();
+        const fileName = `search_results_${new Date().toISOString().slice(0,10)}.csv`;
+        csvParser.export(data, this.columns, fileName);
+        ui.showToast('تم تصدير CSV', 'success');
+    }
+
+    exportJSON() {
+        const data = this.getFilteredData();
+        const exportData = data.map(r => {
+            const obj = {};
+            this.columns.filter(c => !c.id.startsWith('_')).forEach(col => { obj[col.label] = r[col.id]; });
+            return obj;
+        });
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `search_results_${new Date().toISOString().slice(0,10)}.json`;
+        link.click();
+        ui.showToast('تم تصدير JSON', 'success');
+    }
+
+    getFilteredData() {
+        const result = searchEngine.search(this.allRecords, this.query, this.selectedColumns, this.columns);
+        return result.results;
+    }
+
+    // ====== Clear Data ======
+    clearData() {
+        if (!confirm('هل أنت متأكد من مسح جميع البيانات؟')) return;
+
+        this.allRecords = [];
+        this.columns = [];
+        this.metadata = null;
+        this.selectedColumns = [];
+        this.query = '';
+        this.currentPage = 1;
+
+        // مسح localStorage
+        localStorage.removeItem('excel_columns');
+        localStorage.removeItem('excel_metadata');
+        const chunks = localStorage.getItem('excel_chunks');
+        if (chunks) {
+            for (let i = 0; i < parseInt(chunks); i++) {
+                localStorage.removeItem(`excel_chunk_${i}`);
+            }
+            localStorage.removeItem('excel_chunks');
+        }
+
+        ui.hideFileInfo();
+        ui.renderColumnChips([], [], () => {});
+        const searchInput = document.getElementById('search-input');
+        const clearSearch = document.getElementById('clear-search');
+        if (searchInput) searchInput.value = '';
+        if (clearSearch) clearSearch.classList.add('hidden');
+        ui.showToast('تم مسح البيانات', 'success');
+    }
+
+    closeModal(modalId) { ui.toggleModal(modalId, false); }
+}
+
+const app = new App();
+document.addEventListener('DOMContentLoaded', () => app.init());
+</script>
+</body>
+</html>
